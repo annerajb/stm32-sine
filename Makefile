@@ -31,10 +31,10 @@ OBJDUMP		= $(PREFIX)-objdump
 MKDIR_P     = mkdir -p
 TOOLCHAIN_DIR = `dirname \`which $(CC)\``/../$(PREFIX)
 CFLAGS		= -Os -Wall -Wextra -Iinclude/generic -Iinclude/project -Ilibopencm3/include \
-             -fno-common -fno-builtin -pedantic -DSTM32F1  \
+             -fno-common -fno-builtin -pedantic -DSTM32F1 -g \
 				 -mcpu=cortex-m3 -mthumb -std=gnu99 -ffunction-sections -fdata-sections
 CPPFLAGS    = -Os -Wall -Wextra -Iinclude -Iinclude/generic -Iinclude/project -Ilibopencm3/include \
-            -fno-common -std=c++11 -pedantic -DSTM32F1  \
+            -fno-common -std=c++11 -pedantic -DSTM32F1 -g \
 		 -ffunction-sections -fdata-sections -fno-builtin -fno-rtti -fno-exceptions -fno-unwind-tables -mcpu=cortex-m3 -mthumb
 LDSCRIPT	= $(BINARY).ld
 LDFLAGS  = -Llibopencm3/lib -T$(LDSCRIPT) -nostartfiles -Wl,--gc-sections,-Map,linker.map
@@ -48,11 +48,12 @@ vpath %.cpp src/project src/generic
 OPENOCD_BASE	= /usr
 OPENOCD		= $(OPENOCD_BASE)/bin/openocd
 OPENOCD_SCRIPTS	= $(OPENOCD_BASE)/share/openocd/scripts
-OPENOCD_FLASHER	= $(OPENOCD_SCRIPTS)/interface/parport.cfg
+OPENOCD_FLASHER	= $(OPENOCD_SCRIPTS)/interface/stlink-v2.cfg
 OPENOCD_BOARD	= $(OPENOCD_SCRIPTS)/board/olimex_stm32_h103.cfg
 
+
 # Be silent per default, but 'make V=1' will show all compiler calls.
-ifneq ($(V),1)
+ifeq ($(V),1)
 Q := @
 NULL := 2>/dev/null
 endif
@@ -107,9 +108,14 @@ flash: images
 		       -f $(OPENOCD_BOARD) \
 		       -c "init" -c "reset halt" \
 		       -c "flash write_image erase $(BINARY).hex" \
-		       -c "reset" \
-		       -c "shutdown" $(NULL)
-
+		       -c "reset halt" \
+                $(NULL)
+debug:
+	arm-none-eabi-gdb -tui --eval-command="set pagination off" --eval-command="target extended-remote localhost:3333" stm32_sine
+start_openocd:
+	$(OPENOCD) -s $(OPENOCD_SCRIPTS) \
+                -f $(OPENOCD_FLASHER) \
+                -f $(OPENOCD_BOARD) -c "init" -c "reset halt"
 .PHONY: directories images clean
 
 get-deps:
