@@ -30,11 +30,13 @@ OBJCOPY		= $(PREFIX)-objcopy
 OBJDUMP		= $(PREFIX)-objdump
 MKDIR_P     = mkdir -p
 TOOLCHAIN_DIR = `dirname \`which $(CC)\``/../$(PREFIX)
+TERMINAL_DEBUG ?= 0
+COMPILE_DEBUG ?= -g
 CFLAGS		= -Os -Wall -Wextra -Iinclude/generic -Iinclude/project -Ilibopencm3/include \
-             -fno-common -fno-builtin -pedantic -DSTM32F1 -g \
+             -fno-common -fno-builtin -pedantic -DSTM32F1 -DT_DEBUG=$(TERMINAL_DEBUG) $(COMPILE_DEBUG)  \
 				 -mcpu=cortex-m3 -mthumb -std=gnu99 -ffunction-sections -fdata-sections
 CPPFLAGS    = -Os -Wall -Wextra -Iinclude -Iinclude/generic -Iinclude/project -Ilibopencm3/include \
-            -fno-common -std=c++11 -pedantic -DSTM32F1 -g \
+            -fno-common -std=c++11 -pedantic -DSTM32F1 -DT_DEBUG=$(TERMINAL_DEBUG) $(COMPILE_DEBUG) \
 		 -ffunction-sections -fdata-sections -fno-builtin -fno-rtti -fno-exceptions -fno-unwind-tables -mcpu=cortex-m3 -mthumb
 LDSCRIPT	= $(BINARY).ld
 LDFLAGS  = -Llibopencm3/lib -T$(LDSCRIPT) -nostartfiles -Wl,--gc-sections,-Map,linker.map
@@ -119,7 +121,7 @@ start_openocd:
 .PHONY: directories images clean
 
 get-deps:
-	misc/getlibopencm3 $(TOOLCHAIN_DIR)
+	misc/getlibopencm3
 
 Test:
 	cd test && $(MAKE)

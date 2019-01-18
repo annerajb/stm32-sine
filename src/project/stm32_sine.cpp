@@ -139,6 +139,7 @@ static void Ms100Task(void)
    s32fp cpuLoad = FP_FROMINT(PwmGeneration::GetCpuLoad() + scheduler->GetCpuLoad());
    Param::SetFlt(Param::cpuload, cpuLoad / 10);
    Param::SetInt(Param::turns, Encoder::GetFullTurns());
+   Param::SetInt(Param::lasterr, ErrorMessage::GetLastError());
 
    if (hwRev == HW_REV1)
    {
@@ -697,8 +698,8 @@ static void Ms10Task(void)
    else if (0 == initWait)
    {
       Encoder::Reset();
-      PwmGeneration::PwmInit(); //this applies new deadtime and pwmfrq
-      PwmGeneration::SetOpmode(opmode); //this enables the outputs for the given mode
+      //this applies new deadtime and pwmfrq and enables the outputs for the given mode
+      PwmGeneration::SetOpmode(opmode);
       runChargeControl = (opmode == MOD_BOOST || opmode == MOD_BUCK);
       DigIo::Clear(Pin::err_out);
       initWait = -1;
@@ -887,6 +888,8 @@ extern "C" int main(void)
    s.AddTask(Ms100Task, 10000);
 
    DigIo::Set(Pin::prec_out);
+
+   Param::SetInt(Param::version, 4); //backward compatibility
 
    if (Param::GetInt(Param::snsm) < 12)
       Param::SetInt(Param::snsm, Param::GetInt(Param::snsm) + 10); //upgrade parameter
